@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "calculator",
+    "name": "Calculator",
     "slug": "calculator",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "calculator",
@@ -17,7 +17,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.innozen.calculator"
+      "package": "com.innozen.calculator",
+      "versionCode": 2
     },
     "web": {
       "bundler": "metro",

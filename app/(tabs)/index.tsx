@@ -13,9 +13,7 @@ const isOperatorChar = (char: string) => ['÷', '×', '-', '+'].includes(char);
 
 function safeEval(expr: string): string {
   try {
-    // 연산자 변환
     const sanitized = expr.replace(/×/g, '*').replace(/÷/g, '/');
-    // eval 사용 (입력은 버튼으로만 가능하므로 안전)
     // eslint-disable-next-line no-eval
     const result = eval(sanitized);
     return result.toString();
@@ -30,12 +28,22 @@ export default function HomeScreen() {
   const [previous, setPrevious] = useState<string | null>(null);
   const [expression, setExpression] = useState<string>('');
   const [history, setHistory] = useState<string[]>([]);
+  const [lastResult, setLastResult] = useState<string>('');
 
   const handleTap = (type: string, value?: string) => {
     if (type === 'number' && value) {
       if (current.length > 10) return;
-      setCurrent(current === '0' ? value : current + value);
-      setExpression(expression === '0' ? value : expression + value);
+      
+      if (lastResult !== '') {
+        setCurrent(value);
+        setExpression(value);
+        setLastResult('');
+        setOperator(null);
+        setPrevious(null);
+      } else {
+        setCurrent(current === '0' ? value : current + value);
+        setExpression(expression === '0' ? value : expression + value);
+      }
     }
     if (type === 'operator' && value) {
       const lastChar = expression.slice(-1);
@@ -47,12 +55,14 @@ export default function HomeScreen() {
       setOperator(value);
       setPrevious(current);
       setCurrent('0');
+      setLastResult('');
     }
     if (type === 'equal') {
       if (!expression) return;
       const result = safeEval(expression);
-      setCurrent('0');
-      setExpression('0');
+      setCurrent(result);
+      setExpression(result);
+      setLastResult(result);
       setHistory(prevHistory => {
         const newHistory = [expression + '=' + result, ...prevHistory];
         return newHistory.slice(0, 2);
@@ -61,24 +71,46 @@ export default function HomeScreen() {
       setPrevious(null);
     }
     if (type === 'clear') {
+      // 현재 입력 중인 내용만 삭제, 이전 결과값은 유지
       setCurrent('0');
       setOperator(null);
       setPrevious(null);
       setExpression('');
-      setHistory([]);
+      setLastResult('');
+      // history는 유지 (이전 결과값 보존)
     }
     if (type === 'posneg') {
-      setCurrent((parseFloat(current) * -1).toString());
-      setExpression(expression.slice(0, -current.length) + (parseFloat(current) * -1).toString());
+      if (lastResult !== '') {
+        const negated = (parseFloat(lastResult) * -1).toString();
+        setCurrent(negated);
+        setExpression(negated);
+        setLastResult(negated);
+      } else {
+        setCurrent((parseFloat(current) * -1).toString());
+        setExpression(expression.slice(0, -current.length) + (parseFloat(current) * -1).toString());
+      }
     }
     if (type === 'percent') {
-      setCurrent((parseFloat(current) / 100).toString());
-      setExpression(expression.slice(0, -current.length) + (parseFloat(current) / 100).toString());
+      if (lastResult !== '') {
+        const percented = (parseFloat(lastResult) / 100).toString();
+        setCurrent(percented);
+        setExpression(percented);
+        setLastResult(percented);
+      } else {
+        setCurrent((parseFloat(current) / 100).toString());
+        setExpression(expression.slice(0, -current.length) + (parseFloat(current) / 100).toString());
+      }
     }
     if (type === 'dot') {
       if (!current.includes('.')) {
-        setCurrent(current + '.');
-        setExpression(expression + '.');
+        if (lastResult !== '') {
+          setCurrent('0.');
+          setExpression('0.');
+          setLastResult('');
+        } else {
+          setCurrent(current + '.');
+          setExpression(expression + '.');
+        }
       }
     }
   };
